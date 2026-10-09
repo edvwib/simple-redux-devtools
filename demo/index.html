@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Simple Redux DevTools demo</title>
+    <style>
+      body { font: 14px/1.5 system-ui, sans-serif; max-width: 720px; margin: 32px auto; padding: 0 16px; }
+      section { border: 1px solid #ccc; border-radius: 6px; padding: 8px 14px; margin: 12px 0; }
+      h2 { font-size: 15px; margin: 4px 0; }
+      button { margin-right: 6px; }
+      code { background: #f2f2f2; padding: 0 3px; }
+    </style>
+  </head>
+  <body>
+    <h1>Simple Redux DevTools demo</h1>
+    <p>Open DevTools → <b>Redux/Zustand</b> and click the buttons below. Serve this folder over HTTP, e.g.
+      <code>npx serve demo</code> or <code>python3 -m http.server -d demo</code>.</p>
+
+    <section>
+      <h2>Redux Toolkit <code>configureStore</code> (via the devtools enhancer)</h2>
+      <button id="todo-add">Add todo</button>
+      <button id="todo-toggle">Toggle first</button>
+      <button id="todo-clear">Clear done</button>
+    </section>
+
+    <section>
+      <h2>zustand + <code>devtools</code> middleware</h2>
+      <button id="bears-inc">Add bear</button>
+      <button id="bears-honey">Find honey</button>
+    </section>
+
+    <section>
+      <h2>Plain zustand store, registered by hand</h2>
+      <button id="cart-add">Add to cart</button>
+    </section>
+
+    <section>
+      <h2>A store in an iframe</h2>
+      <iframe src="frame.html" title="Demo iframe" style="width: 100%; height: 48px; border: 1px dashed #aaa"></iframe>
+    </section>
+
+    <section>
+      <h2>react-redux <code>&lt;Provider&gt;</code> with devTools disabled (found by the React scan)</h2>
+      <div id="react-root"></div>
+    </section>
+
+    <script type="module">
+      import { configureStore, createSlice } from 'https://esm.sh/@reduxjs/toolkit@2.2.7';
+      import { createStore } from 'https://esm.sh/zustand@5.0.0/vanilla';
+      import { devtools } from 'https://esm.sh/zustand@5.0.0/middleware';
+      import React from 'https://esm.sh/react@18.3.1';
+      import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client?deps=react@18.3.1';
+      import { Provider, useSelector, useDispatch } from 'https://esm.sh/react-redux@9.1.2?deps=react@18.3.1';
+
+      const $ = id => document.getElementById(id);
+
+      // Redux Toolkit
+      const todos = createSlice({
+        name: 'todos',
+        initialState: { items: [], createdAt: new Date() },
+        reducers: {
+          add: (s, a) => void s.items.push({ id: s.items.length + 1, title: a.payload, done: false }),
+          toggle: s => void (s.items[0] && (s.items[0].done = !s.items[0].done)),
+          clearDone: s => void (s.items = s.items.filter(t => !t.done)),
+        },
+      });
+      const rtk = configureStore({
+        reducer: { todos: todos.reducer },
+        middleware: gdm => gdm({ serializableCheck: false }),
+        devTools: { name: 'Todos (RTK)' },
+      });
+      const titles = ['Buy oat milk', 'Water the plants', 'Book dentist', 'Fix the bike light', 'Call grandma'];
+      let added = 0;
+      $('todo-add').onclick = () => rtk.dispatch(todos.actions.add(titles[added++ % titles.length]));
+      $('todo-toggle').onclick = () => rtk.dispatch(todos.actions.toggle());
+      $('todo-clear').onclick = () => rtk.dispatch(todos.actions.clearDone());
+
+      // zustand with devtools middleware
+      const bears = createStore(
+        devtools(
+          set => ({
+            bears: 0,
+            honey: null,
+            visits: new Map([['forest', 2]]),
+            increase: () => set(s => ({ bears: s.bears + 1 }), undefined, 'bears/increase'),
+            findHoney: () => set({ honey: { jars: 3, flavour: 'clover' } }, undefined, 'bears/findHoney'),
+          }),
+          { name: 'Bears (zustand)', enabled: true },
+        ),
+      );
+      $('bears-inc').onclick = () => bears.getState().increase();
+      $('bears-honey').onclick = () => bears.getState().findHoney();
+
+      // Plain zustand store
+      const cart = createStore(set => ({ items: [], add: item => set(s => ({ items: [...s.items, item] })) }));
+      window.__SIMPLE_REDUX_DEVTOOLS__?.register(cart, 'Cart (manual)');
+      $('cart-add').onclick = () => cart.getState().add({ sku: Math.floor(Math.random() * 1000), qty: 1 });
+
+      // react-redux store that doesn't talk to devtools at all
+      const counter = createSlice({
+        name: 'counter',
+        initialState: { value: 0 },
+        reducers: { inc: s => void s.value++ },
+      });
+      const hidden = configureStore({ reducer: counter.reducer, devTools: false });
+      function Counter() {
+        const value = useSelector(s => s.value);
+        const dispatch = useDispatch();
+        return React.createElement('button', { onClick: () => dispatch(counter.actions.inc()) }, `Count: ${value}`);
+      }
+      createRoot($('react-root')).render(React.createElement(Provider, { store: hidden }, React.createElement(Counter)));
+    </script>
+  </body>
+</html>

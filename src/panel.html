@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Redux/Zustand</title>
+    <link rel="stylesheet" href="panel.css" />
+  </head>
+  <body>
+    <header class="toolbar">
+      <select id="store" aria-label="Store"></select>
+      <span id="kind" class="badge"></span>
+      <span id="frame" class="badge"></span>
+      <span class="sep"></span>
+      <button id="live" class="live" aria-pressed="true" title="Follow the latest action">Live</button>
+      <input id="filter" type="search" placeholder="Filter actions" aria-label="Filter actions" />
+      <span class="spacer"></span>
+      <span id="status" class="muted"></span>
+      <button id="rescan" title="Search the page's React tree for react-redux stores">Rescan</button>
+    </header>
+
+    <main id="main">
+      <section class="log" id="log" aria-label="Actions">
+        <ol id="actions"></ol>
+      </section>
+      <div
+        id="splitter"
+        class="splitter"
+        role="separator"
+        tabindex="0"
+        aria-label="Resize the action list"
+        title="Drag to resize, double-click to reset"
+      ></div>
+      <section class="inspector">
+        <nav class="tabs" role="tablist">
+          <button role="tab" data-tab="state" aria-selected="true">State</button>
+          <button role="tab" data-tab="action" aria-selected="false">Action</button>
+          <button role="tab" data-tab="diff" aria-selected="false">Diff</button>
+          <span class="spacer"></span>
+          <label class="option" title="Show object keys in alphabetical order">
+            <input id="sort-keys" type="checkbox" />
+            Sort keys
+          </label>
+          <label class="option" title="Leave out functions, such as zustand actions">
+            <input id="hide-functions" type="checkbox" />
+            Hide functions
+          </label>
+          <button id="raw" aria-pressed="false" title="Show values as plain text instead of a tree">Raw</button>
+          <button id="copy" title="Copy the current tab as JSON, without functions">Copy JSON</button>
+        </nav>
+        <div id="heading" class="heading"></div>
+        <div id="view" class="view" role="tabpanel"></div>
+      </section>
+    </main>
+
+    <div id="empty" class="empty" hidden></div>
+
+    <script src="panel.js"></script>
+  </body>
+</html>

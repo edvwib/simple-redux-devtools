@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Simple Redux DevTools demo iframe</title>
+    <style>
+      body { font: 14px/1.5 system-ui, sans-serif; margin: 8px 12px; }
+    </style>
+  </head>
+  <body>
+    <b>Inside an iframe:</b> zustand + <code>devtools</code>
+    <button id="theme">Toggle theme</button>
+    <button id="volume">Volume up</button>
+
+    <script type="module">
+      import { createStore } from 'https://esm.sh/zustand@5.0.0/vanilla';
+      import { devtools } from 'https://esm.sh/zustand@5.0.0/middleware';
+
+      const settings = createStore(
+        devtools(
+          set => ({
+            theme: 'light',
+            volume: 3,
+            toggleTheme: () => set(s => ({ theme: s.theme === 'light' ? 'dark' : 'light' }), undefined, 'settings/toggleTheme'),
+            volumeUp: () => set(s => ({ volume: s.volume + 1 }), undefined, 'settings/volumeUp'),
+          }),
+          { name: 'Settings (iframe)', enabled: true },
+        ),
+      );
+      document.getElementById('theme').onclick = () => settings.getState().toggleTheme();
+      document.getElementById('volume').onclick = () => settings.getState().volumeUp();
+    </script>
+  </body>
+</html>
